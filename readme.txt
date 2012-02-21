@@ -1,7 +1,7 @@
 === Plugin Name ===
 Contributors: ksg91
 Donate link:
-Tags: twitter, tweet my post, author, twitter handle
+Tags: twitter, tweet my post, author, twitter handle, publish, ksg91
 Requires at least: 2.0.2
 Tested up to: 3.3.1
 Stable tag: 0.9
@@ -17,7 +17,7 @@ If Author has not set any handle only POST_TITLE and POST_LINK is tweeted.
 
 == Installation ==
 
-1. Upload `tmp/*` to the `/wp-content/plugins/tmp/*` directory
+1. Upload all files to the `/wp-content/plugins/tweet-my-post/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
 
 == Frequently Asked Questions ==
@@ -29,3 +29,14 @@ You will find a menu called *Tweet My Post* under *Users*. Open it and set your 
 = How do I set my Twitter account's details from which the tweets are suppose to go? =
 
 You will find the instructions under *TMP - Twitter* menu.
+
+== Screenshots ==
+
+1. Admin Page to set API keys and tokens.
+2. User Page to set their Twitter handle.
+
+== Changelog ==
+
+= 0.9 =
+* A separate page for Twitter API keys and access tokens
+* A user page to set thier Twitter handle.

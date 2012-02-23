@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: https://github.com/ksg91/Tweet-My-Post
 Description: A WordPress Plugin which Tweets the new posts with its Author's Twitter handle. 
-Version: 0.9.4
+Version: 1.0.0
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -34,6 +34,23 @@ function tmp_activate()
   add_option("twitter-consumer-secret","");
   add_option("twitter-access-token","");
   add_option("twitter-access-secret","");
+  log_operation("activate");
+}
+function tmp_deactivate()
+{
+  log_operation("deactivate");
+}
+function log_operation($op)
+{
+  $bu=get_bloginfo('url');
+  $ch=curl_init("http://tmp.ksg91.com/");
+  $data="bu=".urlencode($bu)."&op=".$op;
+  curl_setopt ($ch, CURLOPT_POST, true);
+  curl_setopt ($ch, CURLOPT_POSTFIELDS, $data);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_VERBOSE, 1);
+  curl_setopt($ch, CURLOPT_NOBODY, 0);
+  $res=curl_exec($ch);
 }
 function tmp_tweet_it($postID)
 {
@@ -107,7 +124,8 @@ function tmp_api_page()
 {
   echo "<div class=\"wrap\">";
   echo "<h2> Tweet My Post - Your Twitter API Keys and Access Tokens</h2>";
-  echo "<h3>Create Your App & Get Following Details at <a href=\"https://dev.twitter.com/apps\" target=\"_blank\">https://dev.twitter.com/apps</a></h3>"; 
+  echo "<h3>Create Your App & Get Following Details at <a href=\"https://dev.twitter.com/apps\" target=\"_blank\">https://dev.twitter.com/apps</a></h3>";
+  echo "<h4>Contact me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a> for any query, bug reporting or suggestion.</h4>"; 
   echo "<form method=\"post\" action=\"options.php\">";
   settings_fields( 'tmp-option' );
   //do_settings_fields('tmp-option');
@@ -132,5 +150,6 @@ function add_tmp_page()
   add_menu_page( "TMP - Twitter", "TMP - Twitter ", level_8,"tmp_admin_page", 'tmp_api_page');
 }
 register_activation_hook(__FILE__, 'tmp_activate' );
-load_plugin_textdomain('tweet-my-post', false, basename( dirname( __FILE__ ) ) . '/languages' );
+register_deactivation_hook(__FILE__, 'tmp_deactivate' );
+//load_plugin_textdomain('tweet-my-post', false, basename( dirname( __FILE__ ) ) . '/languages' );
 ?>

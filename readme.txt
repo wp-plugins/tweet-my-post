@@ -4,7 +4,7 @@ Donate link:
 Tags: twitter, tweet my post, author, twitter handle, publish, ksg91
 Requires at least: 2.0.2
 Tested up to: 3.3.1
-Stable tag: 0.9
+Stable tag: 1.0
 
 A WordPress Plugin which Tweets the new posts with its Author's Twitter handle.
 

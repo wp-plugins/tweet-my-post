@@ -1,10 +1,10 @@
 === Plugin Name ===
 Contributors: ksg91
 Donate link:
-Tags: twitter, tweet my post, author, twitter handle, publish, ksg91
+Tags: twitter, tweet my post, author, twitter handle, publish, ksg91, share
 Requires at least: 2.0.2
 Tested up to: 3.3.1
-Stable tag: 1.0
+Stable tag: 1.1
 
 A WordPress Plugin which Tweets the new posts with its Author's Twitter handle.
 
@@ -36,15 +36,20 @@ You will find the instructions under *TMP - Twitter* menu.
 2. User Page to set their Twitter handle.
 
 == Changelog ==
+= 1.1 =
+* Fixed missing title issue for some tweets. Thanks to Dan Shields for reporting.
+* Added brief clear info on how to get required details.
 
 = 1.0 =
-*under the hood changes
+* Under the hood changes
 
 = 0.9 =
-* A separate page for Twitter API keys and access tokens
+* A separate page for Twitter API keys and access tokens.
 * A user page to set thier Twitter handle.
 
 == Upgrade Notice ==
+= 1.1 =
+Fix to missing title issue. Thanks to Dan Shields for reporting.
 
 = 1.0 =
 Internal changes to the plugin

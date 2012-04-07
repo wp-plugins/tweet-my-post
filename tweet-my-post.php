@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: https://github.com/ksg91/Tweet-My-Post
 Description: A WordPress Plugin which Tweets the new posts with its Author's Twitter handle. 
-Version: 1.0.0
+Version: 1.1
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -74,7 +74,7 @@ function buildTMPTweet($postID)
   if($author=="") {
     $title=$post->post_title;
     if(strlen($title)>114){
-      substr($title,0,110);
+      $title.=substr($title,0,110);
       $title.="...";
     }
     $tweet="\"".$post->post_title."\" - ".$link;
@@ -124,7 +124,10 @@ function tmp_api_page()
 {
   echo "<div class=\"wrap\">";
   echo "<h2> Tweet My Post - Your Twitter API Keys and Access Tokens</h2>";
-  echo "<h3>Create Your App & Get Following Details at <a href=\"https://dev.twitter.com/apps\" target=\"_blank\">https://dev.twitter.com/apps</a></h3>";
+  echo "<h3>Go to <a href=\"https://dev.twitter.com/apps\" target=\"_blank\">
+    https://dev.twitter.com/apps</a> , Login and click on <b>Create App</b>. 
+    Then fill simple details and get following details from there.</h3>";
+  echo "<h3>Please <a href=\"http://wordpress.org/extend/plugins/tweet-my-post/\">Rate The Plugin</a> and share with your friends if you find it useful. :) </h3>";
   echo "<h4>Contact me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a> for any query, bug reporting or suggestion.</h4>"; 
   echo "<form method=\"post\" action=\"options.php\">";
   settings_fields( 'tmp-option' );

@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: https://github.com/ksg91/Tweet-My-Post
 Description: A WordPress Plugin which Tweets the new posts with its Author's Twitter handle. 
-Version: 1.1
+Version: 1.2
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -28,18 +28,26 @@ License: GPL2
 add_action("admin_menu","add_tmp_page");
 add_action("admin_init","reg_settings");
 add_action('publish_post','tmp_tweet_it');
+
+//Function for activation hook
 function tmp_activate()
 {
   add_option("twitter-consumer-key","");
   add_option("twitter-consumer-secret","");
   add_option("twitter-access-token","");
   add_option("twitter-access-secret","");
+  add_option("debug-mode","0");
+  add_option("debug-data","");
   log_operation("activate");
 }
+
+//Function for deactivation hook
 function tmp_deactivate()
 {
   log_operation("deactivate");
 }
+
+//Logs activation and deactivation
 function log_operation($op)
 {
   $bu=get_bloginfo('url');
@@ -52,6 +60,8 @@ function log_operation($op)
   curl_setopt($ch, CURLOPT_NOBODY, 0);
   $res=curl_exec($ch);
 }
+
+//Sends Post to Twitter
 function tmp_tweet_it($postID)
 {
   require_once 'lib/EpiCurl.php';
@@ -62,9 +72,26 @@ function tmp_tweet_it($postID)
     get_option("twitter-access-secret"));
   $tweet=buildTMPTweet($postID);
   $update_status = $twitterObj->post_statusesUpdate(array('status' => $tweet ));
-  $update_status->response;
+  $res=$update_status->response;
+  if(get_option("debug-mode")==1)
+    addLog($res);
   return $postID;
 }
+
+//Logs response From Twitter
+function addLog($res)
+{
+  $data=get_option("debug-data");
+  if($data==NULL)
+     $data=array();
+     $subData['logtime']=date(DATE_ATOM,time());
+   foreach($res as $key=>$val)
+     $subData[$key]=$val;
+   array_unshift($data,$subData);
+   update_option("debug-data",$data);
+}
+
+//Builds Tweet to be send
 function buildTMPTweet($postID)
 {
   $post=get_post($postID);
@@ -90,6 +117,8 @@ function buildTMPTweet($postID)
   }
   return $tweet;
 }
+
+//register settings
 function reg_settings()
 {
   global $current_user;
@@ -99,7 +128,10 @@ function reg_settings()
   register_setting('tmp-option', 'twitter-consumer-secret');
   register_setting('tmp-option', 'twitter-access-token');
   register_setting('tmp-option', 'twitter-access-secret');
+  register_setting('tmp-option', 'debug-mode');
 }
+
+//TMP user page code
 function tmp_user_page()
 {
   global $current_user;
@@ -110,7 +142,7 @@ function tmp_user_page()
   //echo get_option($current_user->user_login);
   //echo $current_user->ID;
   echo "<div class=\"wrap\">";
-  echo "<h2> Tweet My Post</h2>";
+  echo "<h2>Tweet My Post</h2>";
   echo "<form method=\"post\" action=\"?page=tmp_user_page\">";
   settings_fields( 'tmp-option' );
   //do_settings_fields('tmp-option');
@@ -120,15 +152,18 @@ function tmp_user_page()
   echo "</tr>";
   echo "</table><p class=\"submit\"><input type=\"submit\" class=\"button-primary\" value=\"Save Changes\" /></p></form></div>";
 }
+
+//TMP Twitter Settings Page
 function tmp_api_page()
 {
   echo "<div class=\"wrap\">";
   echo "<h2> Tweet My Post - Your Twitter API Keys and Access Tokens</h2>";
-  echo "<h3>Go to <a href=\"https://dev.twitter.com/apps\" target=\"_blank\">
+  echo "<h3>Instructions</h3>Go to <a href=\"https://dev.twitter.com/apps\" target=\"_blank\">
     https://dev.twitter.com/apps</a> , Login and click on <b>Create App</b>. 
-    Then fill simple details and get following details from there.</h3>";
-  echo "<h3>Please <a href=\"http://wordpress.org/extend/plugins/tweet-my-post/\">Rate The Plugin</a> and share with your friends if you find it useful. :) </h3>";
-  echo "<h4>Contact me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a> for any query, bug reporting or suggestion.</h4>"; 
+    Then fill simple details and get following details from there. Don't forget to put read+write access permission.";
+  echo "<h3>Rate the Plugin</h3>Please <a href=\"http://wordpress.org/extend/plugins/tweet-my-post/\">Rate The Plugin</a> and share with your friends if you find it useful. :) ";
+  echo "<h3>Contact me</h3>Contact me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a> for any query, bug reporting or suggestion.</h4>";
+  echo "<h3>Settings</h3>"; 
   echo "<form method=\"post\" action=\"options.php\">";
   settings_fields( 'tmp-option' );
   //do_settings_fields('tmp-option');
@@ -145,13 +180,48 @@ function tmp_api_page()
   echo "<tr valign=\"top\"><th scope=\"row\">Twitter Access Token Secret:</th>";
   echo "<td><input type=\"text\" name=\"twitter-access-secret\" value=\"".get_option("twitter-access-secret")."\"/></td>";
   echo "</tr>";
+  echo "<tr valign=\"top\"><th scope=\"row\">Enable Debug Log:</th>";
+  echo "<td><input type=\"checkbox\" name=\"debug-mode\" value=1 ".(get_option("debug-mode")==1?"checked=\"yes\"":"")." /></td>";
+  echo "</tr>";
   echo "</table><p class=\"submit\"><input type=\"submit\" class=\"button-primary\" value=\"Save Changes\" /></p></form></div>";
 }
+
+//TMP Log Page
+function log_page()
+{
+  if($_GET['action']=="clearLog")
+    update_option("debug-data",NULL);
+  echo "<h2>Log Page</h2>";
+  echo "<form><input type=\"button\" value=\"Clear Log\" onClick=\"window.location.href='admin.php?page=tmp_log_page&action=clearLog'\"></form>";
+  $debug=get_option("debug-data");
+  echo "<div>";
+  if($debug==NULL)
+    return;
+  foreach($debug as $val){
+    echo "<div style=\"border-top:2px solid #DEDEDE;border-bottom:2px solid #DEDEDE;\">";
+    if(is_array($val))
+    {
+      echo "<h3>[".$val['logtime']."]</h3>";
+      unset($val['logtime']);
+      foreach($val as $k=>$v)
+        echo "<b>".strtoupper($k).":</b>".$v."<br />";
+    }
+    else
+      echo $val."<br />";
+    echo "</div>";
+  }
+  echo "</div>"; 
+}
+
+//function action for admin_menu hook to add pages
 function add_tmp_page()
 {
   add_users_page( "Tweet My Post", "Tweet My Post", level_1, "tmp_user_page", "tmp_user_page");
-  add_menu_page( "TMP - Twitter", "TMP - Twitter ", level_8,"tmp_admin_page", 'tmp_api_page');
+  add_menu_page( "Tweet My Post","Tweet My Post", level_8,"tmp_admin_page", 'tmp_api_page', plugin_dir_url( __FILE__ )."/bird_small.png");
+  add_submenu_page("tmp_admin_page", "Tweet My Post","TMP - Log ", level_8,"tmp_log_page", 'log_page');
 }
+
+//register activation/deactivation hook
 register_activation_hook(__FILE__, 'tmp_activate' );
 register_deactivation_hook(__FILE__, 'tmp_deactivate' );
 //load_plugin_textdomain('tweet-my-post', false, basename( dirname( __FILE__ ) ) . '/languages' );

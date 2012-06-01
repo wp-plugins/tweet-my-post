@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: https://github.com/ksg91/Tweet-My-Post
 Description: A WordPress Plugin which Tweets the new posts with its Author's Twitter handle. 
-Version: 1.2
+Version: 1.2.1
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -38,27 +38,6 @@ function tmp_activate()
   add_option("twitter-access-secret","");
   add_option("debug-mode","0");
   add_option("debug-data","");
-  log_operation("activate");
-}
-
-//Function for deactivation hook
-function tmp_deactivate()
-{
-  log_operation("deactivate");
-}
-
-//Logs activation and deactivation
-function log_operation($op)
-{
-  $bu=get_bloginfo('url');
-  $ch=curl_init("http://tmp.ksg91.com/");
-  $data="bu=".urlencode($bu)."&op=".$op;
-  curl_setopt ($ch, CURLOPT_POST, true);
-  curl_setopt ($ch, CURLOPT_POSTFIELDS, $data);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  curl_setopt($ch, CURLOPT_VERBOSE, 1);
-  curl_setopt($ch, CURLOPT_NOBODY, 0);
-  $res=curl_exec($ch);
 }
 
 //Sends Post to Twitter

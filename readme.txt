@@ -4,15 +4,16 @@ Donate link:
 Tags: twitter, tweet my post, author, twitter handle, publish, ksg91
 Requires at least: 2.0.2
 Tested up to: 3.3.2
-Stable tag: 1.2.1
+Stable tag: 1.3.17
 
 A WordPress Plugin which Tweets the new posts with its Author's Twitter handle.
 
 == Description ==
 
-This plugin allows wordpress users to set their twitter handle and whenever a new post is published, tweet will be sent with post's title, link and it's author's twitter handle. 
-A sample tweet would be "POST_TITLE - POST_LINK by @AUTHOR" . 
-If Author has not set any handle, only POST_TITLE & POST_LINK are tweeted.
+This plugin allows WordPress users to set their twitter handle and whenever a new post is published, tweet will be sent with post's title, link and it's author's twitter handle. 
+Defualt Format would be "POST_TITLE - POST_LINK by @AUTHOR" . If Author has not set any handle, only POST_TITLE & POST_LINK are tweeted.
+You can also set your own custom format that suits you best.
+
 
 
 == Installation ==
@@ -37,7 +38,14 @@ You will find the instructions under *TMP - Twitter* menu.
 
 == Changelog ==
 
-= 1.2 = Added Debug Log
+= 1.3.17 = 
+* Added Feature to set custom Format
+
+= 1.2.1 = 
+* Fixed a security flaw
+
+= 1.2 = 
+* Added Debug Log
 
 = 1.0 =
 * Under the hood changes
@@ -47,6 +55,9 @@ You will find the instructions under *TMP - Twitter* menu.
 * A user page to set thier Twitter handle.
 
 == Upgrade Notice ==
+
+= 1.2 = 
+Fixes a security flaw.
 
 = 1.2 =
 Debug Log Mode for logging the response of twitter. After upgrading, please deactivate and reactive the plugin.

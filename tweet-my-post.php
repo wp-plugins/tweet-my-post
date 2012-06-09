@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: http://wordpress.org/extend/plugins/tweet-my-post/
 Description: A WordPress Plugin which Tweets the new posts with its Author's Twitter handle. 
-Version: 1.4.11
+Version: 1.4.12
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2

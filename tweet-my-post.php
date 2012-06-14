@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: http://wordpress.org/extend/plugins/tweet-my-post/
 Description: A WordPress Plugin which Tweets the new posts with its Author's Twitter handle. 
-Version: 1.4.12
+Version: 1.6.24
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -28,6 +28,7 @@ License: GPL2
 add_action('admin_menu','add_tmp_page');
 add_action('admin_init','reg_settings');
 add_action('publish_post','tmp_ckeck_post');
+add_action('publish_page','tmp_ckeck_post');
 add_action('add_meta_boxes', 'tmp_metabox' );
 add_action('admin_enqueue_scripts', 'tmp_head_resource');
 
@@ -45,7 +46,7 @@ function tmp_metabox() {
         'tmp_metabox_html',
         'post',
         'side',
-        'core' 
+        'high' 
     );
     add_meta_box( 
         'tmp_metabox',
@@ -53,14 +54,20 @@ function tmp_metabox() {
         'tmp_metabox_html',
         'page',
         'side',
-        'core'
+        'high'
     );
 }
 
 //HTML code for TMP metabox Code
-function tmp_metabox_html() {
+function tmp_metabox_html($post_id) {
+  $postStatus=get_post_status($post_id);
   // checkbox for meta
-  echo '<span id="tmpit"><input type="checkbox" name="tmpChkbox" checked value="1" id="tmpChkbox" /><label for="tmpChkbox" style="font-size:large;">&nbsp; &nbsp; Tweet This Post?</label></span>';
+  echo '<span class="tmpit"><input type="checkbox" name="tmpChkbox"'.( 
+    ($postStatus=="publish")?'':' checked ').'value="1" id="tmpChkbox" />
+    <label for="tmpChkbox" style="font-size:large;">&nbsp; &nbsp; Tweet This Post?</label></span>';
+  echo '<br /><br /><span class="tmpit"><input type="checkbox" name="tmpShrtlnk" checked value="1" id="tmpShrtlnk" />
+    <label for="tmpShrtlnk" style="font-size:large;">&nbsp; &nbsp; Use Shortlink?</label>
+    </span>';
 }
 
 //Checks if post is to be tweeted  
@@ -77,9 +84,10 @@ function tmp_ckeck_post( $post_id ) {
         return $postID;
   }
   $tmpit=$_POST['tmpChkbox'];
+  $tmpShrtlnk=$_POST['tmpShrtlnk'];
   //tweet if checkbox selected
   if($tmpit==1)
-    tmp_tweet_it($postID);
+    tmp_tweet_it($postID,$tmpShrtlnk);
   return $postID;
 
 }
@@ -98,7 +106,7 @@ function tmp_activate()
 }
 
 //Sends Post to Twitter
-function tmp_tweet_it($postID)
+function tmp_tweet_it($postID,$tmpShrtlnk)
 {
   require_once 'lib/EpiCurl.php';
   require_once 'lib/EpiOAuth.php';
@@ -106,7 +114,7 @@ function tmp_tweet_it($postID)
   $twitterObj = new EpiTwitter(get_option("twitter-consumer-key"), 
     get_option("twitter-consumer-secret"),get_option("twitter-access-token"),
     get_option("twitter-access-secret"));
-  $tweet=buildTMPTweet($postID);
+  $tweet=buildTMPTweet($postID,$tmpShrtlnk);
   $update_status = $twitterObj->post_statusesUpdate(array('status' => $tweet ));
   $res=$update_status->response;
   if(get_option("debug-mode")==1)
@@ -121,20 +129,29 @@ function addLog($res)
   if($data==NULL)
      $data=array();
      $subData['logtime']=date(DATE_ATOM,time());
-   foreach($res as $key=>$val)
-     $subData[$key]=$val;
-   array_unshift($data,$subData);
-   update_option("debug-data",$data);
+  if(!isset($res['error']))
+  {
+    $subData['TEXT']=$res['text'];
+    $subData['SOURCE']=$res['source'];
+    $subData['CREATED_AT']=$res['created_at'];
+  }
+  else
+    $subData['ERROR']=$res['error'];
+  array_unshift($data,$subData);
+  update_option("debug-data",$data);
 }
 
 //Builds Tweet to be send
-function buildTMPTweet($postID)
+function buildTMPTweet($postID,$tmpShrtlnk)
 {
   if(get_option("custom-mode")==1)
-    return getCustomTweet($postID);
+    return getCustomTweet($postID,$tmpShrtlnk);
   $post=get_post($postID);
   $author=get_option("ID-".$post->post_author);
-  $link=get_permalink($postID);
+  if($tmpShrtlnk==1)
+    $link=wp_get_shortlink($postID);
+  else
+    $link=get_permalink($postID);
   $tweet=$author;
   if($author=="") {
     $title=$post->post_title;
@@ -163,7 +180,10 @@ function getCustomTweet($postID)
   $title=$post->post_title;
   $format=get_option("custom-format");
   $author=get_option("ID-".$post->post_author);
-  $link=get_permalink($postID);
+  if($tmpShrtlnk==1)
+    $link=wp_get_shortlink($postID);
+  else
+    $link=get_permalink($postID);
   if($author!=NULL)
   {
     $tweet=str_replace("[h]","@".$author,$format);
@@ -289,7 +309,6 @@ function log_page()
   echo "<h2>Log Page</h2>";
   echo "<form><input type=\"button\" value=\"Clear Log\" onClick=\"window.location.href='admin.php?page=tmp_log_page&action=clearLog'\"></form>";
   $debug=get_option("debug-data");
-  echo "<div>";
   if($debug==NULL)
     return;
   foreach($debug as $val){
@@ -299,13 +318,19 @@ function log_page()
       echo "<h3>[".$val['logtime']."]</h3>";
       unset($val['logtime']);
       foreach($val as $k=>$v)
-        echo "<b>".strtoupper($k).":</b>".$v."<br />";
+      {
+        if(isset($val['ERROR']))
+          echo '<div class="error">';
+        else
+          echo '<div class="updated">';
+        echo "<b>".strtoupper($k).":</b> ".$v."<br />";
+        echo '</div>'; 
+      }
     }
     else
       echo $val."<br />";
     echo "</div>";
   }
-  echo "</div>"; 
 }
 
 //function action for admin_menu hook to add pages

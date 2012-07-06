@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Tweet My Post
-Plugin URI: http://wordpress.org/extend/plugins/tweet-my-post/
-Description: A WordPress Plugin which Tweets the new posts with its title, link and Auther's twitter handle. 
-Version: 1.6.32
+Plugin URI: http://ksg91.com/tweet-my-post/
+Description: A WordPress Plugin which Tweets the new post with its title, link, Auther's twitter handle and a featured image from post.  
+Version: 1.7.17
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -36,9 +36,8 @@ add_action('admin_enqueue_scripts', 'tmp_head_resource');
 function tmp_head_resource() {
   wp_register_style( 'tmp-style', plugin_dir_url( __FILE__ )."/tmp.css" );
   wp_enqueue_style( 'tmp-style' );
-  wp_deregister_script( 'jquery' );
-  wp_register_script( 'jquery', 'http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js');
-  wp_enqueue_script( 'jquery' );
+  wp_register_script( '$', 'http://code.jquery.com/jquery-latest.min.js');
+  wp_enqueue_script( '$' );
 }
 
 //adds tmp_metabox in New Post and Page page.
@@ -67,14 +66,29 @@ function tmp_metabox_html($post_id) {
   // checkbox for meta
   echo '<div id="tmp-preview"><button id="preBtn">Preview Tweet</button></div>';
   echo '<span class="tmpit"><input type="checkbox" name="tmpChkbox"'.( 
-    ($postStatus=="publish")?'':' checked ').'value="1" id="tmpChkbox" />
+    ($postStatus=="publish")?'':' checked="checked" ').'value="1" id="tmpChkbox" />
     <label for="tmpChkbox" style="font-size:large;">&nbsp; &nbsp; Tweet This Post?</label></span>';
-  echo '<br /><br /><span class="tmpit"><input type="checkbox" name="tmpShrtlnk" checked value="1" id="tmpShrtlnk" />
-    <label for="tmpShrtlnk" style="font-size:large;">&nbsp; &nbsp; Use Shortlink?</label>
-    </span>';
+  echo '<br /><br /><span class="tmpit"><input type="checkbox" name="tmpShrtlnk" checked="checked" value="1" id="tmpShrtlnk" />
+    <label for="tmpShrtlnk" style="font-size:large;">&nbsp; &nbsp; Use Shortlink?</label></span>';
+  echo '<br /><br /><span class="tmpit"><input type="checkbox" name="useFtrImg" checked="checked" value="1" id="useFtrImg" />
+        <label for="useFtrImg" style="font-size:large;">&nbsp; &nbsp; Use Featured Image?</label></span><br />';
+  echo '<div id="ftrImgSec">';
+  echo '<img id="ftrImg" src="'.plugin_dir_url( __FILE__ ).'bird.png" height=100 width=100 />';
+  echo '<img src="'.plugin_dir_url( __FILE__ ).'/prev.png" id="tmpPrev" title="Previous Image" /> 
+        <img src="'.plugin_dir_url( __FILE__ ).'/next.png" id="tmpNext" title="Next Image" />
+        <img src="'.plugin_dir_url( __FILE__ ).'/refresh.png" id="tmpRefresh" title="Refetch New Images" />
+        <br /> &nbsp; <span id="imgInfo"></span>';
+  echo '</div>';
+  echo '<input type="hidden" name="imgLnk" value="'.plugin_dir_url( __FILE__ ).'bird.png" id="hidFld" />';
+  
   //js for Div
   echo '<script type="text/javascript">
+      var imgs=new Array("'.plugin_dir_url( __FILE__ ).'bird.png");
+      var count=1,curPos=0;
       $(document).ready(function(){
+        getImages();
+        if($("#useFtrImg").attr("checked")!="checked")
+          $("#ftrImgSec").hide("slow");
         $("#title").keypress(function(e){
           $("#tmp-preview").html(getTweetPreview);
         });
@@ -85,18 +99,81 @@ function tmp_metabox_html($post_id) {
           $("#preBtn").hide();
           $("#tmp-preview").html(getTweetPreview);
           e.preventDefault();
-          });
+        });
+        $("#tmpRefresh").click(function(e){
+          $("#tmpRefresh").attr("src","'.plugin_dir_url( __FILE__ ).'loading.gif");
+          getImages();
+          $("#tmp-preview").html(getTweetPreview);
+          e.preventDefault();
+        });
+        $("#tmpNext").click(function(e){
+          nextPrevImg("next");
+          updateImgInfo();
+          $("#tmp-preview").html(getTweetPreview);
+          e.preventDefault();
+        });
+        $("#tmpPrev").click(function(e){
+          nextPrevImg("prev");
+          updateImgInfo();
+          $("#tmp-preview").html(getTweetPreview);
+          e.preventDefault();
+        });
+        $("#useFtrImg").change(function(e){
+          $("#ftrImgSec").toggle("slow");
+          $("#tmp-preview").html(getTweetPreview);
+        });
       });
       ';
-  echo '
-        function getTweetPreview()
+  echo 'function getTweetPreview()
         {
           var format="'.getTweetFormat().'";
           var title=$("#title").val();
           var link="'.get_permalink($post_id).'";
           var preview=format.replace("[t]",title);
           preview=preview.replace("[l]",link);
+          if($("#useFtrImg").attr("checked")=="checked")
+            preview=preview+" "+($("#hidFld").attr("value"));
           return preview; 
+        }
+        </script>';
+  echo '<script type="text/javascript">
+        function getImages()
+        {
+          var preUrl=$("#post-preview").attr("href");
+          $.get(preUrl, function(data) {
+            var m=data.match(/https?:\/\/([a-zA-Z0-9\.\/\-\_\%\&\=])*\.(jpg|png|gif|jpeg)/gi);
+            imgs=$.unique(m);
+            count=imgs.push("'.plugin_dir_url( __FILE__ ).'bird.png");
+            $("#ftrImg").attr("src",m[0]);
+            $("#hidFld").attr("value",m[0]);
+            $("#tmpRefresh").attr("src","'.plugin_dir_url( __FILE__ ).'refresh.png");
+            updateImgInfo();
+          });
+        }
+        function nextPrevImg(action)
+        {
+          if(action=="next")
+          {
+            if(curPos==(count-1))
+              curPos=0;
+            else
+              curPos++;
+            $("#ftrImg").attr("src",imgs[curPos]);
+          }
+          else
+          {
+            if(curPos==0)
+              curPos=count-1;
+            else
+              curPos--;
+            $("#ftrImg").attr("src",imgs[curPos]);
+          }
+          $("#hidFld").attr("value",imgs[curPos]);
+        }
+        function updateImgInfo()
+        {
+          $("#hidFld").attr("value",imgs[curPos]);
+          $("#imgInfo").html("Images "+(curPos+1)+"/"+count);
         }
         </script>';
 }
@@ -109,7 +186,7 @@ function getTweetFormat()
   if(get_option("custom-mode")==1)
     $format=get_option("custom-format");
   else
-    $format='"[t]" - [l] [o]by[/o] [h]';
+    $format='\"[t]\" - [l] [o]by[/o] [h]';
   if(get_option("ID-".$current_user->ID)==NULL){
      $format=str_replace("[h]","",$format);
      $format=preg_replace("`(\[o\])(.*)(\[/o\])`","", $format);
@@ -138,9 +215,19 @@ function tmp_ckeck_post( $post_id ) {
   }
   $tmpit=$_POST['tmpChkbox'];
   $tmpShrtlnk=$_POST['tmpShrtlnk'];
+  $useFtrImg=$_POST['useFtrImg'];
+  $imgLnk=$_POST['imgLnk'];
   //tweet if checkbox selected
   if($tmpit==1)
-    tmp_tweet_it($postID,$tmpShrtlnk);
+  {
+    if($useFtrImg==1){
+      tmp_tweet_it($postID,$tmpShrtlnk,$imgLnk);
+      
+    }
+    else
+      tmp_tweet_it($postID,$tmpShrtlnk);
+  }
+    
   return $postID;
 
 }
@@ -159,7 +246,7 @@ function tmp_activate()
 }
 
 //Sends Post to Twitter
-function tmp_tweet_it($postID,$tmpShrtlnk)
+function tmp_tweet_it($postID,$tmpShrtlnk,$imgLnk=null)
 {
   require_once 'lib/EpiCurl.php';
   require_once 'lib/EpiOAuth.php';
@@ -167,7 +254,7 @@ function tmp_tweet_it($postID,$tmpShrtlnk)
   $twitterObj = new EpiTwitter(get_option("twitter-consumer-key"), 
     get_option("twitter-consumer-secret"),get_option("twitter-access-token"),
     get_option("twitter-access-secret"));
-  $tweet=buildTMPTweet($postID,$tmpShrtlnk);
+  $tweet=buildTMPTweet($postID,$tmpShrtlnk,$imgLnk);
   $update_status = $twitterObj->post_statusesUpdate(array('status' => $tweet ));
   $res=$update_status->response;
   if(get_option("debug-mode")==1)
@@ -195,12 +282,13 @@ function addLog($res)
 }
 
 //Builds Tweet to be send
-function buildTMPTweet($postID,$tmpShrtlnk)
+function buildTMPTweet($postID,$tmpShrtlnk,$imgLnk)
 {
   if(get_option("custom-mode")==1)
-    return getCustomTweet($postID,$tmpShrtlnk);
+    return getCustomTweet($postID,$tmpShrtlnk,$imgLnk);
   $post=get_post($postID);
   $author=get_option("ID-".$post->post_author);
+  $link="Hello";
   if($tmpShrtlnk==1)
     $link=wp_get_shortlink($postID);
   else
@@ -208,26 +296,49 @@ function buildTMPTweet($postID,$tmpShrtlnk)
   $tweet=$author;
   if($author=="") {
     $title=$post->post_title;
-    if(strlen($title)>114){
-      $title.=substr($title,0,110);
-      $title.="...";
+    if($imgLnk!=null)
+    {
+      if(strlen($title)>93){
+        $title.=substr($title,0,93);
+        $title.="...";
+      }
+    }
+    else
+    {
+      if(strlen($title)>114){
+        $title.=substr($title,0,110);
+        $title.="...";
+      }
     }
     $tweet="\"".$post->post_title."\" - ".$link;
+    if($imgLnk!=null)
+      $tweet.=" ".$imgLnk;
   }
   else {
     $len=strlen(" by @".$author);
     $title=$post->post_title;
-    if(strlen($title)>(116-$len)){
-      $title=substr($title,0,(110-$len));
-      $title.="...";
+    if($imgLnk!=NULL){
+      if(strlen($title)>(116-$len-20)){
+        $title=substr($title,0,(110-$len-20));
+        $title.="...";
+      }
+      $tweet="\"".$title."\" - ". $link." by @".$author;
     }
-    $tweet="\"".$title."\" - ". $link." by @".$author;
+    else {
+      if(strlen($title)>(116-$len)){
+        $title=substr($title,0,(110-$len));
+        $title.="...";
+      }
+      $tweet="\"".$title."\" - ". $link." by @".$author;
+    }
+    if($imgLnk!=null)
+      $tweet.=" ".$imgLnk;
   }
   return $tweet;
 }
 
 //Builds Tweet according to custom format
-function getCustomTweet($postID)
+function getCustomTweet($postID,$tmpShrtlnk,$imgLnk)
 {
   $post=get_post($postID);
   $title=$post->post_title;
@@ -244,12 +355,22 @@ function getCustomTweet($postID)
     $tweet=str_replace("[/o]","",$tweet);
     $len=strlen($tweet);
     $tweet=str_replace("[l]",$link,$tweet);
-    if($len+17>140)
-      return str_replace("[t]","",$tweet);
-    if($len+strlen($title)<118)
-      return str_replace("[t]",$title,$tweet);
-    $title=substr($title,0,111-$len);
-    $tweet=str_replace("[t]",$title."...",$tweet);
+    if($imgLnk!=NULL){
+      if($len+37>140)
+        return str_replace("[t]","",$tweet)." ".$imgLnk;
+      if($len+20+strlen($title)<118)
+        return str_replace("[t]",$title,$tweet)." ".$imgLnk;
+      $title=substr($title,0,95-$len);
+      $tweet=str_replace("[t]",$title."...",$tweet)." ".$imgLnk;
+    }
+    else{
+      if($len+17>140)
+        return str_replace("[t]","",$tweet);
+      if($len+strlen($title)<118)
+        return str_replace("[t]",$title,$tweet);
+      $title=substr($title,0,111-$len);
+      $tweet=str_replace("[t]",$title."...",$tweet);
+    }
     return $tweet;
   }
   else
@@ -258,12 +379,22 @@ function getCustomTweet($postID)
     $tweet=preg_replace("`(\[o\])(.*)(\[/o\])`","", $tweet);
     $len=strlen($tweet);
     $tweet=str_replace("[l]",$link,$tweet);
-    if($len+17>140)
-      return str_replace("[t]","",$tweet);
-    if($len+strlen($title)<118)
-      return str_replace("[t]",$title,$tweet);
-    $title=substr($title,0,111-$len);
-    $tweet=str_replace("[t]",$title."...",$tweet);
+    if($imgLnk!=NULL){
+      if($len+17>140)
+        return str_replace("[t]","",$tweet);
+      if($len+strlen($title)<118)
+        return str_replace("[t]",$title,$tweet);
+      $title=substr($title,0,111-$len);
+      $tweet=str_replace("[t]",$title."...",$tweet)." ".$imgLnk;
+    }
+    else{
+      if($len+17>140)
+        return str_replace("[t]","",$tweet);
+      if($len+strlen($title)<118)
+        return str_replace("[t]",$title,$tweet);
+      $title=substr($title,0,111-$len);
+      $tweet=str_replace("[t]",$title."...",$tweet);
+    }
     return $tweet;
   }
 }
@@ -388,7 +519,7 @@ function log_page()
 function add_tmp_page()
 {
   add_users_page( "Tweet My Post", "Tweet My Post", level_1, "tmp_user_page", "tmp_user_page");
-  add_menu_page( "Tweet My Post","Tweet My Post", level_8,"tmp_admin_page", 'tmp_api_page', plugin_dir_url( __FILE__ )."/bird_small.png");
+  add_menu_page( "Tweet My Post","Tweet My Post", level_8,"tmp_admin_page", 'tmp_api_page', plugin_dir_url( __FILE__ )."bird_small.png");
   add_submenu_page("tmp_admin_page", "Tweet My Post","TMP - Log ", level_8,"tmp_log_page", 'log_page');
 }
 

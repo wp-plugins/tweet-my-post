@@ -532,6 +532,6 @@ function add_tmp_page()
 
 //register activation/deactivation hook
 register_activation_hook(__FILE__, 'tmp_activate' );
-register_deactivation_hook(__FILE__, 'tmp_deactivate' );
+//register_deactivation_hook(__FILE__, 'tmp_deactivate' );
 //load_plugin_textdomain('tweet-my-post', false, basename( dirname( __FILE__ ) ) . '/languages' );
 ?>

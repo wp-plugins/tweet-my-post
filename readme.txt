@@ -31,7 +31,7 @@ You will find a menu called *Tweet My Post* under *Users*. Open it and set your 
 
 You will find the instructions under *Tweet My Post* menu.
 
-= Why does this plugin doesn't send Tweet?
+= Why does this plugin doesn't send Tweet? =
 
 You can check the reason at *TMP - Log* page. Most probably because you have not set your API and Access Tokens/Secret. Another well-known cause is, your Twitter app has only read permission. Update setting to read+write permission and re-create access tokens. 
 

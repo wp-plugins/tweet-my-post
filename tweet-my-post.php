@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: http://ksg91.com/tweet-my-post/
 Description: A WordPress Plugin which Tweets the new post with its title, link, Auther's twitter handle and a featured image from post.  
-Version: 1.7.17
+Version: 1.7.19
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -31,6 +31,7 @@ add_action('publish_post','tmp_ckeck_post');
 add_action('publish_page','tmp_ckeck_post');
 add_action('add_meta_boxes', 'tmp_metabox' );
 add_action('admin_enqueue_scripts', 'tmp_head_resource');
+add_action('publish_future_post','tmp_future_post');
 
 //adds css and jquery plugin
 function tmp_head_resource() {
@@ -201,7 +202,7 @@ function getTweetFormat()
 }
 
 //Checks if post is to be tweeted  
-function tmp_ckeck_post( $post_id ) {
+function tmp_ckeck_post( $postID ) {
   // Check permissions
   if ( 'page' == $_POST['post_type'] ) 
   {
@@ -227,10 +228,16 @@ function tmp_ckeck_post( $post_id ) {
     else
       tmp_tweet_it($postID,$tmpShrtlnk);
   }
-    
   return $postID;
 
 }
+
+// Function to be called for future/schedual post
+function tmp_future_post( $post_id )
+{
+  tmp_tweet_it($post_id,1);
+}
+
 
 //Function for activation hook
 function tmp_activate()

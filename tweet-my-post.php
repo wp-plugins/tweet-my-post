@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: http://ksg91.com/tweet-my-post/
 Description: A WordPress Plugin which Tweets the new post with its title, link, Auther's twitter handle and a featured image from post.  
-Version: 1.7.20
+Version: 1.7.21
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -449,7 +449,11 @@ function tmp_api_page()
     https://dev.twitter.com/apps</a> , Login and click on <b>Create App</b>. 
     Then fill simple details and get following details from there. Don't forget to put read+write access permission.";
   echo "<h3>Rate the Plugin</h3>Please <a href=\"http://wordpress.org/extend/plugins/tweet-my-post/\">Rate The Plugin</a> and share with your friends if you find it useful. :) ";
-  echo "<h3>Contact me</h3>Contact me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a> for any query, bug reporting or suggestion.</h4>";
+  echo "<h3>Support</h3>";
+  echo "For quick support &nbsp; ";
+  echo '<a href="https://twitter.com/Tweet_My_Post" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @Tweet_My_Post</a>
+		<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+  echo "<br />You can email me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a>";
   echo "<h3>Settings</h3>"; 
   echo "<form method=\"post\" action=\"options.php\">";
   settings_fields( 'tmp-option' );

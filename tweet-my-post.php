@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: http://ksg91.com/tweet-my-post/
 Description: A WordPress Plugin which Tweets the new post with its title, link, Auther's twitter handle and a featured image from post.  
-Version: 1.7.21
+Version: 1.7.22
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -37,8 +37,6 @@ add_action('publish_future_post','tmp_future_post');
 function tmp_head_resource() {
   wp_register_style( 'tmp-style', plugin_dir_url( __FILE__ )."/tmp.css" );
   wp_enqueue_style( 'tmp-style' );
-  wp_register_script( '$', 'http://code.jquery.com/jquery-latest.min.js');
-  wp_enqueue_script( '$' );
 }
 
 //adds tmp_metabox in New Post and Page page.
@@ -65,7 +63,7 @@ function tmp_metabox() {
 function tmp_metabox_html($post_id) {
   $postStatus=get_post_status($post_id);
   // checkbox for meta
-  echo '<div id="tmp-preview"><button id="preBtn">Preview Tweet</button></div>';
+  echo '<div id="tmp-preview"></div>';
   echo '<span class="tmpit"><input type="checkbox" name="tmpChkbox"'.( 
     ($postStatus=="publish")?'':' checked="checked" ').'value="1" id="tmpChkbox" />
     <label for="tmpChkbox" style="font-size:large;">&nbsp; &nbsp; Tweet This Post?</label></span>';
@@ -75,31 +73,26 @@ function tmp_metabox_html($post_id) {
         <label for="useFtrImg" style="font-size:large;">&nbsp; &nbsp; Use Featured Image?</label></span><br />';
   echo '<div id="ftrImgSec">';
   echo '<img id="ftrImg" src="'.plugin_dir_url( __FILE__ ).'bird.png" height=100 width=100 />';
-  echo '<img src="'.plugin_dir_url( __FILE__ ).'/prev.png" id="tmpPrev" title="Previous Image" /> 
-        <img src="'.plugin_dir_url( __FILE__ ).'/next.png" id="tmpNext" title="Next Image" />
-        <img src="'.plugin_dir_url( __FILE__ ).'/refresh.png" id="tmpRefresh" title="Refetch New Images" />
+  echo '<img src="'.plugin_dir_url( __FILE__ ).'prev.png" id="tmpPrev" title="Previous Image" /> 
+        <img src="'.plugin_dir_url( __FILE__ ).'next.png" id="tmpNext" title="Next Image" />
+        <img src="'.plugin_dir_url( __FILE__ ).'refresh.png" id="tmpRefresh" title="Refetch New Images" />
         <br /> &nbsp; <span id="imgInfo"></span>';
   echo '</div>';
   echo '<input type="hidden" name="imgLnk" value="'.plugin_dir_url( __FILE__ ).'bird.png" id="hidFld" />';
   
   //js for Div
   echo '<script type="text/javascript">
+		$=jQuery.noConflict();
       var imgs=new Array("'.plugin_dir_url( __FILE__ ).'bird.png");
       var count=1,curPos=0;
       $(document).ready(function(){
         getImages();
-        if($("#useFtrImg").attr("checked")!="checked")
+		$("#tmp-preview").hide();
+		if($("#useFtrImg").attr("checked")!="checked")
           $("#ftrImgSec").hide("slow");
-        $("#title").keypress(function(e){
-          $("#tmp-preview").html(getTweetPreview);
-        });
-        $("#title").blur(function(){
-          $("#tmp-preview").html(getTweetPreview);
-        });
-        $("#preBtn").click(function(e){
-          $("#preBtn").hide();
-          $("#tmp-preview").html(getTweetPreview);
-          e.preventDefault();
+        $("#title").live("keyup",function(){
+			$("#tmp-preview").show();
+          $("#tmp-preview").html(getTweetPreview());
         });
         $("#tmpRefresh").click(function(e){
           $("#tmpRefresh").attr("src","'.plugin_dir_url( __FILE__ ).'loading.gif");
@@ -119,7 +112,7 @@ function tmp_metabox_html($post_id) {
           $("#tmp-preview").html(getTweetPreview);
           e.preventDefault();
         });
-        $("#useFtrImg").change(function(e){
+        $("#useFtrImg").live("change",function(e){
           $("#ftrImgSec").toggle("slow");
           $("#tmp-preview").html(getTweetPreview);
         });
@@ -145,6 +138,7 @@ function tmp_metabox_html($post_id) {
             var m=data.match(/https?:\/\/([a-zA-Z0-9\.\/\-\_\%\&\=])*\.(jpg|png|gif|jpeg)/gi);
             imgs=$.unique(m);
             count=imgs.push("'.plugin_dir_url( __FILE__ ).'bird.png");
+			curPos=0;
             $("#ftrImg").attr("src",m[0]);
             $("#hidFld").attr("value",m[0]);
             $("#tmpRefresh").attr("src","'.plugin_dir_url( __FILE__ ).'refresh.png");

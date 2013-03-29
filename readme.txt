@@ -4,7 +4,7 @@ Donate link:
 Tags: twitter, tweet my post, author, twitter handle, publish, ksg91, post image, featured image,
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 1.7.32
+Stable tag: 1.7.33
 
 A WordPress Plugin which Tweets the new posts with its title, link, Author's twitter handle and a featured image from the post. 
 
@@ -49,6 +49,9 @@ You can check the reason at *TMP - Log* page. Most probably because you have not
 4. Log Page
 
 == Changelog ==
+
+= 1.7.33 =
+* Updated jQuery to remove deprecated code
 
 = 1.7.32 =
 * Added option to set defaults for Editor's Sidebar.

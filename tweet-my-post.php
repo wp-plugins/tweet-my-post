@@ -3,7 +3,7 @@
 Plugin Name: Tweet My Post
 Plugin URI: http://ksg91.com/tweet-my-post/
 Description: A WordPress Plugin which Tweets the new post with its title, link, Auther's twitter handle and a featured image from post.  
-Version: 1.7.34
+Version: 1.8.7
 Author: Kishan Gor
 Author URI: http://ksg91.com
 License: GPL2
@@ -88,14 +88,14 @@ function tmp_metabox_html($post_id) {
       $(document).ready(function(){
         getImages();
 		$("#tmp-preview").hide();
-		if($("#useFtrImg").attr("checked")!="checked")
+		if($("#useFtrImg").prop("checked")!="checked")
           $("#ftrImgSec").hide("slow");
-        $("#title").on("keyup",function(){
+        $("#title").live("keyup",function(){
 			$("#tmp-preview").show();
           $("#tmp-preview").html(getTweetPreview());
         });
         $("#tmpRefresh").click(function(e){
-          $("#tmpRefresh").attr("src","'.plugin_dir_url( __FILE__ ).'loading.gif");
+          $("#tmpRefresh").prop("src","'.plugin_dir_url( __FILE__ ).'loading.gif");
           getImages();
           $("#tmp-preview").html(getTweetPreview);
           e.preventDefault();
@@ -112,12 +112,41 @@ function tmp_metabox_html($post_id) {
           $("#tmp-preview").html(getTweetPreview);
           e.preventDefault();
         });
-        $("#useFtrImg").on("change",function(e){
+        $("#useFtrImg").live("change",function(e){
           $("#ftrImgSec").toggle("slow");
           $("#tmp-preview").html(getTweetPreview);
         });
       });
       ';
+      ?>$(document).ready(function(){
+            var shortLink = '<?php echo get_option("useShortLinkOpt"); ?>';
+            var ftrdImg = '<?php echo get_option("useFtrdImgOpt"); ?>';
+            //alert(shortLink);
+            if(shortLink == "yes"){
+              $('#tmpShrtlnk').prop("checked","checked");
+            }
+            else if(shortLink == "no"){
+                
+              $('#tmpShrtlnk').prop("checked",false);
+            }
+            else{
+                $('#tmpShrtlnk').prop("checked","checked");
+            }
+            if(ftrdImg == "yes"){
+              $('#useFtrImg').prop("checked","checked");
+            }
+            else if(ftrdImg == "no"){
+                
+              $('#useFtrImg').prop("checked",false);
+            }
+            else{
+                
+                $('#useFtrImg').prop("checked","checked");
+            }       
+            $('#tmpShrtlnk').change();
+            $('#useFtrImg').change();
+          });
+      <?php
   echo 'function getTweetPreview()
         {
           var format="'.getTweetFormat().'";
@@ -125,23 +154,23 @@ function tmp_metabox_html($post_id) {
           var link="'.get_permalink($post_id).'";
           var preview=format.replace("[t]",title);
           preview=preview.replace("[l]",link);
-          if($("#useFtrImg").attr("checked")=="checked")
-            preview=preview+" "+($("#hidFld").attr("value"));
+          if($("#useFtrImg").prop("checked")=="checked")
+            preview=preview+" "+($("#hidFld").prop("value"));
           return preview; 
         }
         </script>';
   echo '<script type="text/javascript">
         function getImages()
         {
-          var preUrl=$("#post-preview").attr("href");
+          var preUrl=$("#post-preview").prop("href");
           $.get(preUrl, function(data) {
             var m=data.match(/https?:\/\/([a-zA-Z0-9\.\/\-\_\%\&\=])*\.(jpg|png|gif|jpeg)/gi);
             imgs=$.unique(m);
             count=imgs.push("'.plugin_dir_url( __FILE__ ).'bird.png");
 			curPos=0;
-            $("#ftrImg").attr("src",m[0]);
-            $("#hidFld").attr("value",m[0]);
-            $("#tmpRefresh").attr("src","'.plugin_dir_url( __FILE__ ).'refresh.png");
+            $("#ftrImg").prop("src",m[0]);
+            $("#hidFld").prop("value",m[0]);
+            $("#tmpRefresh").prop("src","'.plugin_dir_url( __FILE__ ).'refresh.png");
             updateImgInfo();
           });
         }
@@ -153,7 +182,7 @@ function tmp_metabox_html($post_id) {
               curPos=0;
             else
               curPos++;
-            $("#ftrImg").attr("src",imgs[curPos]);
+            $("#ftrImg").prop("src",imgs[curPos]);
           }
           else
           {
@@ -161,13 +190,13 @@ function tmp_metabox_html($post_id) {
               curPos=count-1;
             else
               curPos--;
-            $("#ftrImg").attr("src",imgs[curPos]);
+            $("#ftrImg").prop("src",imgs[curPos]);
           }
-          $("#hidFld").attr("value",imgs[curPos]);
+          $("#hidFld").prop("value",imgs[curPos]);
         }
         function updateImgInfo()
         {
-          $("#hidFld").attr("value",imgs[curPos]);
+          $("#hidFld").prop("value",imgs[curPos]);
           $("#imgInfo").html("Images "+(curPos+1)+"/"+count);
         }
         </script>';
@@ -244,21 +273,30 @@ function tmp_activate()
   add_option("debug-data","");
   add_option("custom-mode",0);
   add_option("custom-format","'[t]'[o]- by[/o] [h] - [l]");
+  add_option("useFtrdImgOpt","yes");
+  add_option("useShortLinkOpt","yes");
 }
 
 //Sends Post to Twitter
 function tmp_tweet_it($postID,$tmpShrtlnk,$imgLnk=null)
 {
-  require_once 'lib/EpiCurl.php';
-  require_once 'lib/EpiOAuth.php';
-  require_once 'lib/EpiTwitter.php';
-  $twitterObj = new EpiTwitter(get_option("twitter-consumer-key"), 
-    get_option("twitter-consumer-secret"),get_option("twitter-access-token"),
-    get_option("twitter-access-secret"));
+  require_once ('lib/codebird.php');
+  \Codebird\Codebird::setConsumerKey(get_option("twitter-consumer-key"), get_option("twitter-consumer-secret")); // static, see 'Using multiple Codebird instances'
+
+  $cb = \Codebird\Codebird::getInstance();
+
+  $cb->setToken(get_option("twitter-access-token"), get_option("twitter-access-secret"));
+
+
   $tweet=buildTMPTweet($postID,$tmpShrtlnk,$imgLnk);
   try{
-    $update_status = $twitterObj->post_statusesUpdate(array('status' => $tweet ));
-    $res=$update_status->response;
+
+    $reply = $cb->statuses_updateWithMedia(array(
+        'status'  => $tweet,
+        'media[]' => $imgLnk
+    ));
+    
+    $res= (array) $reply;
   }
   catch(Exception $e){
     if($e->getMessage()==''){
@@ -323,8 +361,7 @@ function buildTMPTweet($postID,$tmpShrtlnk,$imgLnk)
       }
     }
     $tweet="\"".$post->post_title."\" - ".$link;
-    if($imgLnk!=null)
-      $tweet.=" ".$imgLnk;
+    
   }
   else {
     $len=strlen(" by @".$author);
@@ -343,8 +380,7 @@ function buildTMPTweet($postID,$tmpShrtlnk,$imgLnk)
       }
       $tweet="\"".$title."\" - ". $link." by @".$author;
     }
-    if($imgLnk!=null)
-      $tweet.=" ".$imgLnk;
+    
   }
   return $tweet;
 }
@@ -421,6 +457,8 @@ function reg_settings()
   register_setting('tmp-option', 'debug-mode');
   register_setting('tmp-option', 'custom-mode');
   register_setting('tmp-option', 'custom-format');
+  register_setting('tmp-option', 'useFtrdImgOpt');
+  register_setting('tmp-option', 'useShortLinkOpt');
 }
 
 //TMP user page code
@@ -456,6 +494,9 @@ function tmp_api_page()
   echo "<h3>Rate the Plugin</h3>Please <a href=\"http://wordpress.org/extend/plugins/tweet-my-post/\">Rate The Plugin</a> and share with your friends if you find it useful. :) ";
   echo "<h3>Support</h3>";
   echo "For quick support &nbsp; ";
+  echo '<a href="https://twitter.com/ksg91" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @ksg91</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
+  echo " and/or ";
   echo '<a href="https://twitter.com/Tweet_My_Post" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @Tweet_My_Post</a>
 		<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>';
   echo "<br />You can email me at <a href=\"mailto:ego@ksg91.com\">ego@ksg91.com</a>";
@@ -485,6 +526,19 @@ function tmp_api_page()
   echo "<tr valign=\"top\"><th scope=\"row\">Custom Format:</th>";
   echo "<td><input type=\"text\" name=\"custom-format\" value=\"".get_option("custom-format")."\" /></td>";
   echo "</tr>";
+  
+  echo '<tr>';
+  echo '<th col=2><strong>Sidebar Default State</strong></th>';
+  echo '</tr>';
+  echo '<tr>';
+  echo '<td><label for="idShortLink">Use Shortlink?</label></td>';
+  echo '<td><input type="checkbox" name="useShortLinkOpt" value="yes" id="idShortLink" /></td>';
+  echo '</tr>';
+  echo '<tr>';
+  echo '<td><label for="idUseFtrdImg">Use Featured Image?</label></td>';
+  echo '<td><input type="checkbox" name="useFtrdImgOpt" value="yes" id="idUseFtrdImg" /></td>';
+  echo '</tr>';
+  
   echo "<tr><td colspan=2>";
   echo "<div style=\"border: 2px solid #CDCDCD;background-color:#DDDDDD;\">";
   echo "<b>Format Options:</b>";
@@ -496,7 +550,75 @@ function tmp_api_page()
   echo "<b>Output:</b> 'Hello World!' posted by <a href=\"http://twitter.com/ksg91\">@ksg91</a> at <a href=\"http://localhost/wordpress/?p=1\">http://localhost/wordpress/?p=1</a>";
   echo "</div>";
   echo "</td></tr>";
-  echo "</table><p class=\"submit\"><input type=\"submit\" class=\"button-primary\" value=\"Save Changes\" /></p></form></div>";
+  echo "</table><p class=\"submit\"><input type=\"submit\" class=\"button-primary\" value=\"Save Changes\" /></p>";
+  echo "<div style='display:none;' id='idShortLinkDiv' ></div>";
+  echo "<div style='display:none;' id='idFtrdImgDiv' ></div>";
+  echo "</form></div>";
+  ?>
+      <script type="text/javascript">
+      $=jQuery.noConflict();
+        $(document).ready(function(){
+          
+          $('#idShortLink').change(function(){
+            if($(this).prop("checked")=="checked" || $(this).prop("checked")==true ){
+              $('#idShortLinkDiv').empty();
+            }
+            else{
+              $('#idShortLinkDiv').html('<input type="hidden" name="useShortLinkOpt" value="no" />');
+            }
+          });
+          
+          $('#idUseFtrdImg').change(function(){
+            if($(this).prop("checked")=="checked" || $(this).prop("checked")==true){
+              $('#idFtrdImgDiv').empty();
+            }
+            else{
+              $('#idFtrdImgDiv').html('<input type="hidden" name="useFtrdImgOpt" value="no" />');
+            }
+          });
+          callChange();
+        });  
+        
+      </script>
+      <script type="text/javascript">
+      function callChange(){
+        //alert('alerted');
+        var shortLink = '<?php echo get_option("useShortLinkOpt"); ?>';
+        var ftrdImg = '<?php echo get_option("useFtrdImgOpt"); ?>';
+        //alert(shortLink);
+        if(shortLink == "yes"){
+          $('#idShortLink').prop("checked","checked");
+        }
+        else if(shortLink == "no"){
+            
+          $('#idShortLink').prop("checked",false);
+        }
+        else{
+            <?php 
+              add_option('useShortLinkOpt','yes');
+            ?>
+            $('#idShortLink').prop("checked","checked");
+        }
+        if(ftrdImg == "yes"){
+          $('#idUseFtrdImg').prop("checked","checked");
+        }
+        else if(ftrdImg == "no"){
+            
+          $('#idUseFtrdImg').prop("checked",false);
+        }
+        else{
+            <?php 
+              add_option('useShortLinkOpt','yes');
+            ?>
+            $('#idUseFtrdImg').prop("checked","checked");
+        }       
+        $('#idShortLink').change();
+        $('#idUseFtrdImg').change();
+      }
+      </script>
+      
+  <?php
+  
 }
 
 //TMP Log Page

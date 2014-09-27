@@ -3,8 +3,8 @@ Contributors: ksg91
 Donate link:
 Tags: twitter, tweet my post, author, twitter handle, publish, ksg91, post image, featured image,
 Requires at least: 3.0
-Tested up to: 3.5
-Stable tag: 1.7.34
+Tested up to: 4.0
+Stable tag: 1.8.7
 
 A WordPress Plugin which Tweets the new posts with its title, link, Author's twitter handle and a featured image from the post. 
 
@@ -12,7 +12,7 @@ A WordPress Plugin which Tweets the new posts with its title, link, Author's twi
 
 This plugin allows WordPress Authors to set their twitter handle and whenever a new post is published, tweet will be sent with post's title, link, it's author's twitter handle and a featured image. 
 
-Defualt Format would be "POST_TITLE - POST_LINK by @AUTHOR FEATURED_IMAGE" .
+Defualt Format would be "POST_TITLE - POST_LINK by @AUTHOR.
 
 You can also set your own custom format that suits you best. Several options are available to customize your tweet from settings or at sidebar on post/page editor.
 
@@ -49,12 +49,9 @@ You can check the reason at *TMP - Log* page. Most probably because you have not
 4. Log Page
 
 == Changelog ==
-
-= 1.7.34 =
-* Updated library to follow Twitter API changes. TMP works again!
-
-= 1.7.33 =
-* Updated jQuery to remove deprecated code
+= 1.8.7 =
+* Fixed UI bugs
+* Not featured images are sent are native image for the tweet.
 
 = 1.7.32 =
 * Added option to set defaults for Editor's Sidebar.
